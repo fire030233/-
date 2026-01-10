@@ -143,5 +143,3 @@ if st.button("📥 엑셀 파일 다운로드"):
         file_name="시약_유통기한_자동관리_결과.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-    )
