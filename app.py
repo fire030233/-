@@ -34,6 +34,10 @@ today = pd.to_datetime(datetime.today().date())
 df['남은일수'] = (df['유통기한'] - today).dt.days
 df = df.sort_values(by='남은일수')
 
+expired = df[df['남은일수'] < 0]
+soon = df[(df['남은일수'] >= 0) & (df['남은일수'] <= 30)]
+safe = df[df['남은일수'] > 30]
+
 # =================================================
 # 화면 표시
 # =================================================
@@ -48,26 +52,57 @@ def color_df(row):
     return ['background-color:white'] * len(row)
 
 # =================================================
-# 🔍 시약 제품명 검색
+# 🚨 1. 유통기한 지난 시약
 # =================================================
-st.subheader("🔍 시약 검색")
+st.subheader("🔴 유통기한 지난 시약")
+
+if expired.empty:
+    st.success("✅ 유통기한이 지난 시약이 없습니다.")
+else:
+    st.dataframe(expired.style.apply(color_df, axis=1), use_container_width=True)
+
+# =================================================
+# ⚠️ 2. 유통기한 임박 시약
+# =================================================
+st.subheader("🟡 유통기한 임박 시약 (30일 이내)")
+
+if soon.empty:
+    st.success("✅ 유통기한 임박 시약이 없습니다.")
+else:
+    st.dataframe(soon.style.apply(color_df, axis=1), use_container_width=True)
+
+# =================================================
+# ✅ 3. 유통기한 충분히 남은 시약
+# =================================================
+st.subheader("⚪ 유통기한 충분히 남은 시약")
+
+if safe.empty:
+    st.info("표시할 시약이 없습니다.")
+else:
+    st.dataframe(safe.style.apply(color_df, axis=1), use_container_width=True)
+
+# =================================================
+# 🔍 4. 전체 시약 통합 검색
+# =================================================
+st.divider()
+st.subheader("🔍 전체 시약 검색")
 
 search_term = st.text_input("시약 제품명 입력 (부분 검색 가능)")
 
-filtered_df = df.copy()
+search_df = df.copy()
 
 if search_term:
-    filtered_df = filtered_df[
-        filtered_df['제품명'].astype(str).str.contains(search_term, case=False, na=False)
+    search_df = search_df[
+        search_df['제품명'].astype(str).str.contains(search_term, case=False, na=False)
     ]
 
 st.dataframe(
-    filtered_df.style.apply(color_df, axis=1),
+    search_df.style.apply(color_df, axis=1),
     use_container_width=True
 )
 
 # =================================================
-# 엑셀 다운로드 (색상 포함)
+# 📥 엑셀 다운로드
 # =================================================
 st.divider()
 st.subheader("📥 엑셀 다운로드 (색상 포함)")
@@ -107,4 +142,6 @@ if st.button("📥 엑셀 파일 다운로드"):
         data=final_output,
         file_name="시약_유통기한_자동관리_결과.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
     )
